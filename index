@@ -1,0 +1,161 @@
+<html>
+	<head>
+		<title>yager's web</title>
+		<meta charset="UTF-8">
+		<script src="jquery-3.1.0.min.js"></script>
+		<script>
+			// 取出隨機整數
+			function getRandomInt (min,max){
+				return Math.floor(Math.random() * (max-min+1))+min;
+			}
+
+			$(function(){
+				var $body = $("body"),
+					$stage = $("#stage"),
+					$player = $("#player"),
+					$score = $("#score"),
+					counter =0,
+					p_speed = 5,
+					p_xway = 0,
+					p_yway = 0,
+					bR = Math.sqrt(Math.pow($stage.width()/2,2)+Math.pow($stage.height()/2,2)),
+					b_speed = 5;
+				var Key={
+					UP:38,
+					DOWN:40,
+					LEFT:37,
+					RIGHT:39
+				}
+
+				$player.css("left",($stage.width()-$player.width())/2+"px");
+				$player.css("top",($stage.height()-$player.height())/2+"px");
+
+				$body.keydown(function(e){
+					switch(e.which)
+					{
+						case Key.UP: p_yway=-1;break;
+						case Key.DOWN: p_yway=1;break;
+						case Key.LEFT: p_xway=-1;break;
+						case Key.RIGHT: p_xway=1;break;
+					}
+				});
+
+				$body.keyup(function(){
+					p_xway=0;
+					p_yway=0;
+				})
+
+				// 建立子彈
+				function createBullet(){
+					$stage.append("<div class='sprite bullet'></div>");
+					var b = $stage.find(".bullet:last"),
+						b_bangle = getRandomInt(0,359),
+						bx = $stage.width()/2+bR*Math.cos(Math.PI*b_bangle/180)-b.width()/2;
+						by = $stage.height()/2+bR*Math.sin(Math.PI*b_bangle/180)-b.height()/2,
+						b_end_angle = getRandomInt(b_bangle+90,b_bangle+270);
+						b.data("x_speed",b_speed*Math.cos(Math.PI*b_end_angle/180));
+						b.data("y_speed",b_speed*Math.sin(Math.PI*b_end_angle/180));
+
+					b.css("left",bx+"px");
+					b.css("top",by+"px");
+				}
+				for (var i = 0; i < 50; i++)
+				createBullet();
+
+				// 角色控制動畫
+				var loop = setInterval(function(){
+					// player動畫
+					var xspeed = 0,
+						yspeed = 0,
+						x = parseInt($player.css("left")),
+						y = parseInt($player.css("top"));
+					if(p_xway == -1 && p_yway == 0) xspeed = p_speed*p_xway;
+					if(p_xway == 0 && p_yway == -1) yspeed = p_speed*p_yway;
+					if(p_xway == 1 && p_yway == 0) xspeed = p_speed*p_xway;
+					if(p_xway == 0 && p_yway == 1) yspeed = p_speed*p_yway;
+					if(p_xway!=0 && p_yway!=0){
+						xspeed = p_speed/Math.sqrt(2) * p_xway;
+						yspeed = p_speed/Math.sqrt(2) * p_yway;
+					}
+					x=x+xspeed;
+					y=y+yspeed;
+					if(x<0)x=0;
+					if(y<0)y=0;
+					if(x>$stage.width()-$player.width()) x = $stage.width()-$player.width();
+					if(y>$stage.height()-$player.height()) y = $stage.height()-$player.height();
+					$player.css("left",x+xspeed+"px");
+					$player.css("top",y+yspeed+"px");
+					$(".bullet").each(function(){
+					// 子彈移動動畫
+						var $this = $(this),
+							bx = parseInt($this.css("left")),
+							by = parseInt($this.css("top")),
+							dist =Math.sqrt(Math.pow($stage.width()/2-(bx+$this.width()/2),2)+Math.pow($stage.height()/2-(by+$this.height()/2),2));
+						bx = Math.round(bx+$this.data("x_speed"));
+						by = Math.round(by+$this.data("y_speed"));
+						$this.css("left",bx+"px");
+						$this.css("top",by+"px");
+						if($this.width()/2+bR<dist)
+						{
+							$this.remove();
+							createBullet();
+						}
+						// 碰撞機制
+						var pcx = parseInt($player.css("left"))+$player.width()/2,
+							pcy = parseInt($player.css("top"))+$player.height()/2,
+							p_b_dist = Math.sqrt(Math.pow(pcx-(bx+$this.width()/2),2)+Math.pow(pcy-by,2)); 
+						if ($this.width()/2+$player.width()/2 > p_b_dist)
+						{
+							clearInterval(loop);
+						}
+					})
+					// 顯示分數
+					$score.html(++counter);
+				},1000/60);
+
+			})
+		</script>
+		<style>
+				body{
+					text-align: center;
+				}
+				#stage{
+					text-align: left;
+					display: inline-block;
+					position: relative;
+					width: 500px;
+					height: 400px;
+					background: #000000;
+					overflow: hidden;
+				}
+				.sprite{
+					display: inline-block;
+					position: absolute;
+				}
+				#player{
+					width: 16px;
+					height: 16px;
+					background: #FFCC00;
+				}
+				.bullet{
+					width: 6px;
+					height: 6px;
+					background: #FF0000;
+				}
+				#score{
+					width: 100%;
+					color: white;
+					font-size: 25px;
+					padding-right: 10px;
+					z-index: 999;
+					text-align: right;
+				}
+		</style>
+	</head>
+	<body>
+			<div id="stage">
+				<div id="player" class="sprite"></div>
+				<div id="score" class="sprite">00000</div>
+			</div>
+	</body>
+</html>
